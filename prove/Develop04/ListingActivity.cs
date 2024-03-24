@@ -27,7 +27,11 @@ public class ListingActivity : MindfulnessActivity
 
         Console.WriteLine("Start listing...");
 
+<<<<<<< HEAD
        
+=======
+        // Additional logic can be added to allow user to list items, but for simplicity, let's just simulate listing for the specified duration
+>>>>>>> a5df8a8 (Pass to homepage week 4)
         Thread.Sleep(duration * 1000); // Pause for the specified duration
         Console.WriteLine("Listed items.");
     }
