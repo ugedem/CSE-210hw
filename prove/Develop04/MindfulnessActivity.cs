@@ -1,8 +1,6 @@
-
 using System;
-using System.Threading;
 
-class MindfulnessActivity
+public abstract class MindfulnessActivity
 {
     protected string name;
     protected string description;
@@ -16,49 +14,20 @@ class MindfulnessActivity
     public void StartActivity(int duration)
     {
         ShowWelcomeMessage();
-        Console.WriteLine("Press Enter when you are ready to start...");
-        Console.ReadLine(); // Wait for the user to press Enter
-        Console.Clear(); // Clear the console after the user presses Enter
-        ShowStartingMessage();
-        Thread.Sleep(4000); // Pause for preparation
         PerformActivity(duration);
-        ShowEndingMessage();
+        ShowEndingMessage(duration);
     }
 
     protected virtual void ShowWelcomeMessage()
     {
-        Console.WriteLine($"Welcome to the {name} activity!");
-    }
-
-    protected virtual void ShowStartingMessage()
-    {
-        Console.WriteLine($"Get ready for {name} activity:");
+        Console.WriteLine($"Starting {name} activity...");
         Console.WriteLine(description);
-        Console.WriteLine("Setting the duration...\n");
     }
 
-    protected void ShowEndingMessage()
+    protected abstract void PerformActivity(int duration);
+
+    protected virtual void ShowEndingMessage(int duration)
     {
-        Console.WriteLine($"Great job! You have completed the {name} activity.\n");
-        Thread.Sleep(3000); // Pause before finishing
-    }
-
-    protected virtual void PerformActivity(int duration)
-    {
-        // To be implemented in derived classes
-    }
-
-    protected void ShowSpinner(int duration)
-    {
-        Console.Write("Processing ");
-
-        for (int i = 0; i < duration * 2; i++)
-        {
-            Console.Write("/");
-            Thread.Sleep(2000); 
-            Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop); // Move the cursor back
-        }
-
-        Console.WriteLine();
+        Console.WriteLine($"Well done! You have completed the {name} activity for {duration} seconds.");
     }
 }
