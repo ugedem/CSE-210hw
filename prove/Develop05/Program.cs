@@ -1,246 +1,366 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 
-// Base class for goals
 abstract class Goal
 {
-    // Shared properties for all goals
-    public string Name { get; }
-    public int Value { get; }
-    public bool Completed { get; protected set; }
+    protected string type;
+    protected string name;
+    protected string description;
+    protected int points;
 
-    // Constructor
-    public Goal(string name, int value)
+    public Goal(string type, string name, string description, int points)
     {
-        Name = name;
-        Value = value;
-        Completed = false;
+        this.type = type;
+        this.name = name;
+        this.description = description;
+        this.points = points;
     }
 
-    // Method to mark the goal as completed
-    public void Complete()
+    public abstract void Complete();
+
+    public void DisplayGoal()
     {
-        Completed = true;
+        Console.WriteLine($"{type} - Name: {name}, Description: {description}, Points: {points}");
     }
 
-    // Abstract methods to be overridden by subclasses
-    public abstract void RecordEvent();
-    public abstract string DisplayStatus();
+    public int Points => points;
+
+    public string Name => name;
+
+    // Method to save goal details to a file
+    public virtual string SaveGoal()
+    {
+        return $"{type},{name},{description},{points}";
+    }
 }
 
-// Simple goal class
 class SimpleGoal : Goal
 {
-    // Constructor
-    public SimpleGoal(string name, int value) : base(name, value) { }
-
-    // Implementation of abstract methods
-    public override void RecordEvent() { }
-
-    public override string DisplayStatus()
+    public SimpleGoal(string type, string name, string description, int points) : base(type, name, description, points)
     {
-        return Completed ? "[X]" : "[ ]";
+    }
+
+    public override void Complete()
+    {
+        Console.WriteLine($"Simple Goal '{Name}' completed!");
     }
 }
 
-// Eternal goal class
 class EternalGoal : Goal
 {
-    // Constructor
-    public EternalGoal(string name, int value) : base(name, value) { }
-
-    // Implementation of abstract methods
-    public override void RecordEvent() { }
-
-    public override string DisplayStatus()
+    public EternalGoal(string type, string name, string description, int points) : base(type, name, description, points)
     {
-        return Completed ? "[X]" : "[ ]";
+    }
+
+    public override void Complete()
+    {
+        Console.WriteLine($"Eternal Goal '{Name}' recorded!");
     }
 }
 
-// Checklist goal class
 class ChecklistGoal : Goal
 {
-    private int _completedCount;
-    private int _targetCount;
+    private int numberTimes;
+    private int bonusPoints;
+    private int timesCompleted;
 
-    // Constructor
-    public ChecklistGoal(string name, int value, int targetCount) : base(name, value)
+    public ChecklistGoal(string type, string name, string description, int points, int numberTimes, int bonusPoints) : base(type, name, description, points)
     {
-        _targetCount = targetCount;
-        _completedCount = 0;
+        this.numberTimes = numberTimes;
+        this.bonusPoints = bonusPoints;
+        this.timesCompleted = 0;
     }
 
-    // Implementation of abstract methods
-    public override void RecordEvent()
+    public override void Complete()
     {
-        _completedCount++;
-        if (_completedCount >= _targetCount)
-            Complete(); // Mark the goal as completed when the target count is reached
-    }
-
-    public override string DisplayStatus()
-    {
-        return Completed ? $"Completed {_completedCount}/{_targetCount} times" : $"Incomplete {_completedCount}/{_targetCount} times";
+        timesCompleted++;
+        if (timesCompleted >= numberTimes)
+        {
+            Console.WriteLine($"Checklist Goal '{Name}' completed with bonus {bonusPoints} points!");
+        }
+        else
+        {
+            Console.WriteLine($"Checklist Goal '{Name}' completed!");
+        }
     }
 }
 
-// Class for managing eternal quest
-class EternalQuest
+class NegativeGoal : Goal
 {
-    // List to hold goals
-    private List<Goal> _goals;
-    private int _score;
-
-    // Constructor
-    public EternalQuest()
+    public NegativeGoal(string type, string name, string description, int points) : base(type, name, description, points)
     {
-        _goals = new List<Goal>();
-        _score = 0;
     }
 
-    // Method to create a goal
-    public void CreateGoal(string goalType, string name, int value, int targetCount = 0)
+    public override void Complete()
     {
-        switch (goalType.ToLower())
-        {
-            case "simple":
-                _goals.Add(new SimpleGoal(name, value));
-                break;
-            case "eternal":
-                _goals.Add(new EternalGoal(name, value));
-                break;
-            case "checklist":
-                _goals.Add(new ChecklistGoal(name, value, targetCount));
-                break;
-            default:
-                Console.WriteLine("Invalid goal type");
-                break;
-        }
-    }
-
-    // Method to record an event for a goal
-    public void RecordEvent(string goalName)
-    {
-        foreach (var goal in _goals)
-        {
-            if (goal.Name == goalName)
-            {
-                goal.RecordEvent();
-                _score += goal.Value;
-                return;
-            }
-        }
-        Console.WriteLine($"Goal '{goalName}' not found");
-    }
-
-    // Method to display all goals
-    public void DisplayGoals()
-    {
-        Console.WriteLine("Goals:");
-        foreach (var goal in _goals)
-        {
-            Console.WriteLine($"{goal.Name} {goal.DisplayStatus()}");
-        }
-    }
-
-    // Method to display score
-    public void DisplayScore()
-    {
-        Console.WriteLine($"Score: {_score}");
-    }
-
-    // Method to save goals to a text file
-    public void SaveToText(string filename)
-    {
-        using (StreamWriter writer = new StreamWriter(filename))
-        {
-            foreach (var goal in _goals)
-            {
-                writer.WriteLine($"{goal.GetType().Name}#{goal.Name}#{goal.Value}#{(goal is ChecklistGoal ? ((ChecklistGoal)goal).DisplayStatus() : "")}");
-            }
-        }
+        Console.WriteLine($"Negative Goal '{Name}' recorded!");
     }
 }
 
-// Main program class
+class GoalManagement
+{
+    private List<Goal> goals;
+
+    public GoalManagement()
+    {
+        goals = new List<Goal>();
+    }
+
+    public void AddGoal(Goal goal)
+    {
+        goals.Add(goal);
+    }
+
+    public void ListGoals()
+    {
+        foreach (var goal in goals)
+        {
+            goal.DisplayGoal();
+        }
+    }
+
+    public int GetTotalPoints()
+    {
+        int totalPoints = 0;
+        foreach (var goal in goals)
+        {
+            totalPoints += goal.Points;
+        }
+        return totalPoints;
+    }
+
+    // Method to record an event for a specific goal
+    public void RecordGoalEvent(string goalName)
+    {
+        Goal goal = goals.Find(g => g.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+        if (goal != null)
+        {
+            goal.Complete();
+        }
+        else
+        {
+            Console.WriteLine($"Goal '{goalName}' not found!");
+        }
+    }
+
+    // Method to save goals to a file
+    public void SaveGoals(string fileName)
+    {
+        using (StreamWriter writer = new StreamWriter(fileName))
+        {
+            foreach (var goal in goals)
+            {
+                writer.WriteLine(goal.SaveGoal());
+            }
+        }
+        Console.WriteLine("Goals saved successfully!");
+    }
+
+    // Method to load goals from a file
+    public void LoadGoals(string fileName)
+    {
+        goals.Clear();
+        using (StreamReader reader = new StreamReader(fileName))
+        {
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                string[] parts = line.Split(',');
+                if (parts.Length == 4)
+                {
+                    string type = parts[0];
+                    string name = parts[1];
+                    string description = parts[2];
+                    int points = int.Parse(parts[3]);
+                    Goal goal = null;
+                    switch (type)
+                    {
+                        case "Simple Goal:":
+                            goal = new SimpleGoal(type, name, description, points);
+                            break;
+                        case "Eternal Goal:":
+                            goal = new EternalGoal(type, name, description, points);
+                            break;
+                        case "Check List Goal:":
+                            int numberTimes = 5; // Default value
+                            int bonusPoints = 0; // Default value
+                            goal = new ChecklistGoal(type, name, description, points, numberTimes, bonusPoints);
+                            break;
+                        case "Negative Goal:":
+                            goal = new NegativeGoal(type, name, description, points);
+                            break;
+                        default:
+                            Console.WriteLine($"Invalid goal type: {type}");
+                            break;
+                    }
+                    if (goal != null)
+                    {
+                        goals.Add(goal);
+                    }
+                }
+            }
+        }
+        Console.WriteLine("Goals loaded successfully!");
+    }
+}
+
+class MainMenu
+{
+    public int UserChoice()
+    {
+        Console.WriteLine("Main Menu:");
+        Console.WriteLine("1. Create New Goal");
+        Console.WriteLine("2. List Goals");
+        Console.WriteLine("3. Record Event");
+        Console.WriteLine("4. Save Goals");
+        Console.WriteLine("5. Load Goals");
+        Console.WriteLine("6. Quit");
+        Console.Write("Enter your choice: ");
+        return int.Parse(Console.ReadLine());
+    }
+}
+
+class GoalMenu
+{
+    public int GoalChoice()
+    {
+        Console.WriteLine("Goal Menu:");
+        Console.WriteLine("1. Simple Goal");
+        Console.WriteLine("2. Eternal Goal");
+        Console.WriteLine("3. Checklist Goal");
+        Console.WriteLine("4. Negative Goal");
+        Console.WriteLine("5. Exit");
+        Console.Write("Enter your choice: ");
+        return int.Parse(Console.ReadLine());
+    }
+}
+
 class Program
 {
-    // Main method
     static void Main(string[] args)
     {
-        EternalQuest quest = new EternalQuest();
+        TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
 
-        Console.WriteLine("Welcome to Eternal Quest!");
-        while (true)
+        GoalManagement goals = new GoalManagement();
+
+        Console.Clear();
+        Console.Write("\n*** Welcome to the Eternal Quest Program ****\n");
+        Console.Write($"\n*** You currently have {goals.GetTotalPoints()} points! ***\n");
+
+        MainMenu choice = new MainMenu();
+        GoalMenu goalChoice = new GoalMenu();
+
+        int action = 0;
+        while (action != 6)
         {
-            Console.WriteLine("\nSelect an option:");
-            Console.WriteLine("1. Create Goal");
-            Console.WriteLine("2. Record Event");
-            Console.WriteLine("3. Display Goals");
-            Console.WriteLine("4. Display Score");
-            Console.WriteLine("5. Save Progress");
-            Console.WriteLine("6. Exit");
-
-            int choice;
-            if (!int.TryParse(Console.ReadLine(), out choice))
-            {
-                Console.WriteLine("Invalid choice. Please enter a number.");
-                continue;
-            }
-
-            switch (choice)
+            action = choice.UserChoice();
+            switch (action)
             {
                 case 1:
-                    Console.WriteLine("Enter goal type (simple, eternal, checklist):");
-                    string goalType = Console.ReadLine().ToLower();
-                    Console.WriteLine("Enter goal name:");
-                    string name = Console.ReadLine();
-                    Console.WriteLine("Enter goal value:");
-                    int value;
-                    if (!int.TryParse(Console.ReadLine(), out value))
+                    Console.Clear();
+                    int goalInput = 0;
+                    while (goalInput != 5)
                     {
-                        Console.WriteLine("Invalid value. Please enter a number.");
-                        continue;
-                    }
-                    if (goalType == "checklist")
-                    {
-                        Console.WriteLine("Enter target count:");
-                        int targetCount;
-                        if (!int.TryParse(Console.ReadLine(), out targetCount))
+                        goalInput = goalChoice.GoalChoice();
+                        switch (goalInput)
                         {
-                            Console.WriteLine("Invalid target count. Please enter a number.");
-                            continue;
+                            case 1:
+                                Console.WriteLine("What is the name of your goal?  ");
+                                string name = Console.ReadLine();
+                                name = textInfo.ToTitleCase(name);
+                                Console.WriteLine("What is a short description of your goal?  ");
+                                string description = Console.ReadLine();
+                                description = textInfo.ToTitleCase(description);
+                                Console.Write("What is the amount of points associated with this goal?  ");
+                                int points = int.Parse(Console.ReadLine());
+                                SimpleGoal sGoal = new SimpleGoal("Simple Goal:", name, description, points);
+                                goals.AddGoal(sGoal);
+                                goalInput = 5;
+                                break;
+                            case 2:
+                                Console.WriteLine("What is the name of your goal?  ");
+                                name = Console.ReadLine();
+                                name = textInfo.ToTitleCase(name);
+                                Console.WriteLine("What is a short description of your goal?  ");
+                                description = Console.ReadLine();
+                                description = textInfo.ToTitleCase(description);
+                                Console.Write("What is the amount of points associated with this goal?  ");
+                                points = int.Parse(Console.ReadLine());
+                                EternalGoal eGoal = new EternalGoal("Eternal Goal:", name, description, points);
+                                goals.AddGoal(eGoal);
+                                goalInput = 5;
+                                break;
+                            case 3:
+                                Console.WriteLine("What is the name of your goal?  ");
+                                name = Console.ReadLine();
+                                name = textInfo.ToTitleCase(name);
+                                Console.WriteLine("What is a short description of your goal?  ");
+                                description = Console.ReadLine();
+                                description = textInfo.ToTitleCase(description);
+                                Console.Write("What is the amount of points associated with this goal?  ");
+                                points = int.Parse(Console.ReadLine());
+                                Console.Write("How many times does this goal need to be accomplished for a bonus?  ");
+                                int numberTimes = int.Parse(Console.ReadLine());
+                                Console.Write("What is the bonus for accomplishing it that many times?  ");
+                                int bonusPoints = int.Parse(Console.ReadLine());
+                                ChecklistGoal clGoal = new ChecklistGoal("Check List Goal:", name, description, points, numberTimes, bonusPoints);
+                                goals.AddGoal(clGoal);
+                                goalInput = 5;
+                                break;
+                            case 4:
+                                Console.WriteLine("What is the name of your goal?  ");
+                                name = Console.ReadLine();
+                                name = textInfo.ToTitleCase(name);
+                                Console.WriteLine("What is a short description of your goal?  ");
+                                description = Console.ReadLine();
+                                description = textInfo.ToTitleCase(description);
+                                Console.Write("How many points should be subtracted for not meeting this goal?  ");
+                                points = int.Parse(Console.ReadLine());
+                                NegativeGoal nGoal = new NegativeGoal("Negative Goal:", name, description, points);
+                                goals.AddGoal(nGoal);
+                                goalInput = 5;
+                                break;
+                            case 5:
+                                break;
+                            default:
+                                Console.WriteLine($"\nSorry the option you entered is not valid.");
+                                break;
                         }
-                        quest.CreateGoal(goalType, name, value, targetCount);
-                    }
-                    else
-                    {
-                        quest.CreateGoal(goalType, name, value);
                     }
                     break;
                 case 2:
-                    Console.WriteLine("Enter the name of the goal to record event:");
-                    string eventName = Console.ReadLine();
-                    quest.RecordEvent(eventName);
+                    Console.Clear();
+                    Console.Write($"\n*** You currently have {goals.GetTotalPoints()} points! ***\n");
+                    goals.ListGoals();
                     break;
                 case 3:
-                    quest.DisplayGoals();
+                    Console.Clear();
+                    Console.Write($"\n*** You currently have {goals.GetTotalPoints()} points! ***\n");
+                    Console.Write("Enter the name of the goal: ");
+                    string eventName = Console.ReadLine();
+                    goals.RecordGoalEvent(eventName);
                     break;
                 case 4:
-                    quest.DisplayScore();
+                    Console.Clear();
+                    Console.Write($"\n*** You currently have {goals.GetTotalPoints()} points! ***\n");
+                    Console.Write("Enter the file name to save goals: ");
+                    string saveFileName = Console.ReadLine();
+                    goals.SaveGoals(saveFileName);
                     break;
                 case 5:
-                    Console.WriteLine("Enter filename to save progress:");
-                    string saveFilename = Console.ReadLine();
-                    quest.SaveToText(saveFilename);
+                    Console.Clear();
+                    Console.Write($"\n*** You currently have {goals.GetTotalPoints()} points! ***\n");
+                    Console.Write("Enter the file name to load goals: ");
+                    string loadFileName = Console.ReadLine();
+                    goals.LoadGoals(loadFileName);
                     break;
                 case 6:
-                    Environment.Exit(0);
+                    Console.WriteLine("\nThank you for using the Eternal Quest Program!\n");
                     break;
                 default:
-                    Console.WriteLine("Invalid choice. Please enter a number between 1 and 6.");
+                    Console.WriteLine($"\nSorry the option you entered is not valid.");
                     break;
             }
         }
