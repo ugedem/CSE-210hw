@@ -18,6 +18,12 @@ abstract class Goal
         Completed = false;
     }
 
+    // Method to mark the goal as completed
+    public void Complete()
+    {
+        Completed = true;
+    }
+
     // Abstract methods to be overridden by subclasses
     public abstract void RecordEvent();
     public abstract string DisplayStatus();
@@ -71,7 +77,7 @@ class ChecklistGoal : Goal
     {
         _completedCount++;
         if (_completedCount >= _targetCount)
-            Completed = true;
+            Complete(); // Mark the goal as completed when the target count is reached
     }
 
     public override string DisplayStatus()
@@ -121,7 +127,6 @@ class EternalQuest
         {
             if (goal.Name == goalName)
             {
-                goal.Completed();
                 goal.RecordEvent();
                 _score += goal.Value;
                 return;
