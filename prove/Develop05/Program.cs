@@ -121,7 +121,7 @@ class EternalQuest
         {
             if (goal.Name == goalName)
             {
-                goal.Complete();
+                goal.Completed();
                 goal.RecordEvent();
                 _score += goal.Value;
                 return;
